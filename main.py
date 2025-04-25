@@ -67,7 +67,15 @@ ytdl_format_options = {
     'format': 'bestaudio/best',
     'quiet': True,
     'noplaylist': True,
-    'extract_flat': False
+    'extract_flat': False,
+    'extractor_args': {
+        'youtube': {
+            'skip': ['webpage'],  # Skip webpage verification
+            'player_client': ['android', 'web'],  # Try different clients
+        }
+    },
+    'nocheckcertificate': True,
+    'source_addresses': ['0.0.0.0']
 }
 ffmpeg_options = {
     'options': '-vn'
