@@ -2,3 +2,4 @@ discord.py
 yt-dlp
 google-api-python-client
 python-dotenv
+flask
