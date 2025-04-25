@@ -6,7 +6,6 @@ import yt_dlp
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import logging
-import datetime
 from collections import deque
 from keep_alive import keep_alive
 
@@ -20,6 +19,20 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger('youtube_api')
+
+# Load opus library for voice support
+if not discord.opus.is_loaded():
+    try:
+        discord.opus.load_opus('libopus.so.0')
+        logger.info("Opus library loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load opus library: {e}")
+        # Try alternative methods
+        try:
+            discord.opus._load_default()
+            logger.info("Opus loaded via default method")
+        except Exception as e:
+            logger.error(f"Failed to load opus via default method: {e}")
 
 load_dotenv()
 
@@ -229,7 +242,7 @@ async def volume(ctx, volume: int):
     if not ctx.voice_client:
         return await ctx.send("Not connected to a voice channel.")
     
-    if 0 > volume > 100:
+    if volume < 0 or volume > 100:
         return await ctx.send("Volume must be between 0 and 100.")
     
     ctx.voice_client.source.volume = volume / 100
