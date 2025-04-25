@@ -235,33 +235,6 @@ async def volume(ctx, volume: int):
     ctx.voice_client.source.volume = volume / 100
     await ctx.send(f"Volume set to {volume}%")
 
-@bot.command()
-async def help(ctx):
-    """Shows all available commands"""
-    help_text = """
-**Music Bot Commands**
-
-**Music Playback:**
-`!play [query]` - Searches YouTube and plays the song
-`!pause` - Pauses the current song
-`!resume` - Resumes a paused song
-`!stop` - Stops playback completely
-`!skip` - Skips to the next song in the queue
-`!volume [0-100]` - Sets the volume
-
-**Queue Management:**
-`!queue` - Shows the current song queue
-`!nowplaying` - Shows the currently playing song
-
-**Voice Channel:**
-`!join` - Joins your voice channel
-`!leave` - Leaves the voice channel
-
-**Other:**
-`!help` - Shows this help message
-"""
-    await ctx.send(help_text)
-
 @bot.event
 async def on_command_error(ctx, error):
     """Handles command errors"""
