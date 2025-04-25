@@ -20,19 +20,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger('youtube_api')
 
-# Load opus library for voice support
-if not discord.opus.is_loaded():
-    try:
-        discord.opus.load_opus('libopus.so.0')
-        logger.info("Opus library loaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to load opus library: {e}")
-        # Try alternative methods
-        try:
-            discord.opus._load_default()
-            logger.info("Opus loaded via default method")
-        except Exception as e:
-            logger.error(f"Failed to load opus via default method: {e}")
+discord.opus.load_opus('libopus.so.0')
 
 load_dotenv()
 
@@ -42,7 +30,7 @@ YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 # Create YouTube API client with logging
 try:
     youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
-    logger.info(f"YouTube API client initialized successfully")
+    logger.info("YouTube API client initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize YouTube API client: {str(e)}")
 
@@ -75,7 +63,6 @@ def search_youtube(query):
         logger.error(f"YouTube API search error for query '{query}': {str(e)}")
         return None, f"Error: {str(e)}"
 
-# yt-dlp options
 ytdl_format_options = {
     'format': 'bestaudio/best',
     'quiet': True,
@@ -88,7 +75,7 @@ ffmpeg_options = {
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
 class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
+    def __init__(self, source, *, data, volume=0.25):
         super().__init__(source, volume)
         self.data = data
         self.title = data.get('title')
@@ -116,7 +103,6 @@ async def leave(ctx):
     if ctx.voice_client:
         await ctx.voice_client.disconnect()
 
-# Play music by search query
 
 # Song queue for each server
 queues = {}
@@ -153,7 +139,6 @@ async def play(ctx, *, query):
     else:
         await ctx.send(f"🎵 Added to queue: **{title}**")
 
-# Function to play the next song in the queue
 # Add this to track currently playing songs
 currently_playing = {}
 
