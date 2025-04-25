@@ -41,7 +41,7 @@ bot = commands.Bot(command_prefix='!', intents=intent)
 
 @bot.event
 async def on_ready():
-    print('Bot is ready')
+    logger.info('Bot is ready')
 
 # YouTube Search
 def search_youtube(query):
@@ -65,17 +65,11 @@ def search_youtube(query):
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
-    'quiet': True,
+    'quiet': False,
     'noplaylist': True,
     'extract_flat': False,
-    'extractor_args': {
-        'youtube': {
-            'skip': ['webpage'],  # Skip webpage verification
-            'player_client': ['android', 'web'],  # Try different clients
-        }
-    },
-    'nocheckcertificate': True,
-    'source_addresses': ['0.0.0.0']
+    'cookiefile': '/etc/secrets/youtube_cookies.txt',
+    'verbose': True,
 }
 ffmpeg_options = {
     'options': '-vn'
@@ -161,13 +155,39 @@ async def play_next(ctx):
         # Update currently playing
         currently_playing[guild_id] = (url, title)
         
-        async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=bot.loop, stream=True)
-            ctx.voice_client.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(
-                play_next(ctx), bot.loop).result() if not e else print(f'Error: {e}'))
-        
-        await ctx.send(f"🎶 Now playing: **{title}**")
-        logger.info(f"Now playing '{title}' requested by {ctx.author}")
+        try:
+            async with ctx.typing():
+                player = await YTDLSource.from_url(url, loop=bot.loop, stream=True)
+                ctx.voice_client.play(player, after=lambda e: asyncio.run_coroutine_threadsafe(
+                    play_next(ctx), bot.loop).result() if not e else print(f'Error: {e}'))
+            
+            await ctx.send(f"🎶 Now playing: **{title}**")
+            logger.info(f"Now playing '{title}' requested by {ctx.author}")
+        except Exception as e:
+            error_message = str(e)
+            logger.error(f"Error playing '{title}': {error_message}")
+            
+            if "Video unavailable" in error_message:
+                await ctx.send(f"⚠️ The video **{title}** is unavailable. It might be region-restricted or age-restricted. Trying to find an alternative...")
+                
+                # Try to find an alternative version of the same song
+                try:
+                    new_url, new_title = search_youtube(f"{title} audio")
+                    if new_url and new_url != url:
+                        await ctx.send(f"🔍 Found alternative: **{new_title}**")
+                        queues[guild_id].appendleft((new_url, new_title))
+                        await play_next(ctx)
+                        return
+                except Exception:
+                    pass  # If alternative search fails, continue to next song
+                
+                await ctx.send("⚠️ Couldn't find an alternative. Skipping to next song.")
+            else:
+                await ctx.send(f"⚠️ Error playing '{title}': {error_message}")
+            
+            # Try to play the next song if there is one
+            if guild_id in queues and queues[guild_id]:
+                await play_next(ctx)
     else:
         # Queue is empty
         if guild_id in queues:
