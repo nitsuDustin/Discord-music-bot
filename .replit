@@ -3,7 +3,7 @@ run = "python main.py"
 
 [nix]
 channel = "stable-24_05"
-packages = ["ffmpeg"]
+packages = ["ffmpeg", "libopus"]
 
 [deployment]
 run = ["sh", "-c", "python main.py"]

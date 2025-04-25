@@ -3,4 +3,5 @@ yt-dlp
 google-api-python-client
 python-dotenv
 flask
-PyNaCl
+PyNaCl==1.5.0
+opuslib==3.0.1
