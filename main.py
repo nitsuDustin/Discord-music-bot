@@ -44,17 +44,34 @@ async def on_ready():
     logger.info('Bot is ready')
 
 # YouTube Search
-def search_youtube(query):
+def search_youtube(query, exclude_id=None):
     try:
         logger.info(f"YouTube API search request: query='{query}'")
         youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-        req = youtube.search().list(q=query, part="snippet", type="video", maxResults=1)
+        
+        # Request more results so we can filter out the excluded ID
+        max_results = 5 if exclude_id else 1
+        req = youtube.search().list(q=query, part="snippet", type="video", maxResults=max_results)
         res = req.execute()
         
         if not res.get('items'):
             logger.warning(f"YouTube API search returned no results for query: '{query}'")
             return None, "No results found"
+        
+        # If we need to exclude an ID, find the first result that doesn't match it
+        if exclude_id:
+            for item in res['items']:
+                video_id = item['id']['videoId']
+                if video_id != exclude_id:
+                    title = item['snippet']['title']
+                    logger.info(f"YouTube API search success: found alternative video '{title}' (ID: {video_id})")
+                    return f"https://www.youtube.com/watch?v={video_id}", title
             
+            # If all results match the excluded ID, return None
+            logger.warning(f"YouTube API search couldn't find alternative for excluded ID: {exclude_id}")
+            return None, "No alternative found"
+        
+        # Normal case - return the first result
         video_id = res['items'][0]['id']['videoId']
         title = res['items'][0]['snippet']['title']
         logger.info(f"YouTube API search success: found video '{title}' (ID: {video_id})")
@@ -182,19 +199,32 @@ async def play_next(ctx):
             error_message = str(e)
             logger.error(f"Error playing '{title}': {error_message}")
             
-            if "Video unavailable" in error_message:
+            if "Video unavailable" in error_message or "This content isn't available" in error_message:
                 await ctx.send(f"⚠️ The video **{title}** is unavailable. It might be region-restricted or age-restricted. Trying to find an alternative...")
+                
+                # Extract video ID from the URL
+                video_id = None
+                if "youtube.com/watch?v=" in url:
+                    video_id = url.split("youtube.com/watch?v=")[1].split("&")[0]
                 
                 # Try to find an alternative version of the same song
                 try:
-                    new_url, new_title = search_youtube(f"{title} audio")
-                    if new_url and new_url != url:
-                        await ctx.send(f"🔍 Found alternative: **{new_title}**")
-                        queues[guild_id].appendleft((new_url, new_title))
-                        await play_next(ctx)
-                        return
-                except Exception:
-                    pass  # If alternative search fails, continue to next song
+                    # Try different search terms
+                    search_terms = [
+                        f"{title} audio",
+                        f"{title} lyrics",
+                        f"{title} official audio"
+                    ]
+                    
+                    for search_term in search_terms:
+                        new_url, new_title = search_youtube(search_term, exclude_id=video_id)
+                        if new_url and new_url != url:
+                            await ctx.send(f"🔍 Found alternative: **{new_title}**")
+                            queues[guild_id].appendleft((new_url, new_title))
+                            await play_next(ctx)
+                            return
+                except Exception as search_error:
+                    logger.error(f"Error searching for alternative: {str(search_error)}")
                 
                 await ctx.send("⚠️ Couldn't find an alternative. Skipping to next song.")
             else:
