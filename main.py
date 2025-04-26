@@ -65,15 +65,16 @@ def search_youtube(query):
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
-    'quiet': True,
+    'quiet': False,
     'noplaylist': True,
     'extract_flat': False,
     'extractor_args': {
         'youtube': {
-            'player_client': ['android', 'web', 'tv', 'ios', 'mweb'],
+            'player_client': ['web', 'tv', 'mweb'],
             'skip': ['webpage']
         }
     },
+    'verbose': True,
     'nocheckcertificate': True,
     'geo_bypass': True,
     'geo_bypass_country': 'US',  # Try specifying a country
