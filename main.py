@@ -65,11 +65,17 @@ def search_youtube(query):
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
-    'quiet': False,
+    'quiet': True,
     'noplaylist': True,
     'extract_flat': False,
-    'cookiefile': '/etc/secrets/youtube_cookies.txt',
-    'verbose': True,
+    'extractor_args': {
+        'youtube': {
+            'player_client': ['android', 'web', 'tv', 'ios', 'mweb'],
+            'skip': ['webpage']
+        }
+    },
+    'nocheckcertificate': True,
+    'geo_bypass': True
 }
 ffmpeg_options = {
     'options': '-vn'
