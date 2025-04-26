@@ -75,7 +75,15 @@ ytdl_format_options = {
         }
     },
     'nocheckcertificate': True,
-    'geo_bypass': True
+    'geo_bypass': True,
+    'geo_bypass_country': 'US',  # Try specifying a country
+    'age_limit': 25,  # Allow age-restricted content
+    'cookiefile': '/etc/secrets/youtube_cookies.txt',
+    'http_headers': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+    }
 }
 ffmpeg_options = {
     'options': '-vn'
